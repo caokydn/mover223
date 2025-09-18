@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hangman Vocabulary Game</title>
+<style>
+/* Giữ nguyên toàn bộ CSS gốc */
+*{box-sizing:border-box;margin:0;padding:0;}
+body {
+  font-family: Comic Sans MS, sans-serif;
+  background: linear-gradient(135deg,#f6d365,#fda085);
+  overflow-x:hidden;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+}
+#brand{
+  width:100%;
+  text-align:center;
+  font-size:1.5em;
+  color:#6b5b95;
+  background:linear-gradient(90deg,#f6d365,#fda085);
+  padding:10px 0;
+  font-weight:bold;
+  position:sticky;
+  top:0;
+  z-index:20;
+  box-shadow:0 2px 5px rgba(0,0,0,0.2);
+}
+/* Welcome Screen */
+#welcomeScreen {position:absolute;top:0;left:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;background:linear-gradient(135deg,#fcd34d,#fbbf24);z-index:10;}
+#welcomeScreen h2{font-size:3em;color:#f472b6;margin-bottom:20px;text-align:center;}
+#welcomeScreen input{padding:12px;font-size:20px;border-radius:12px;border:2px solid #ccc;margin-bottom:20px;width:250px;text-align:center;}
+#welcomeScreen button{padding:15px 40px;font-size:20px;border:none;border-radius:12px;background:linear-gradient(90deg,#38bdf8,#0ea5e9);color:#0f172a;font-weight:bold;cursor:pointer;box-shadow:0 5px 15px rgba(0,0,0,0.3);transition:0.3s;}
+#welcomeScreen button:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,0.4);}
+/* Game Area */
+#gameArea{display:none;width:100%;max-width:700px;background:linear-gradient(135deg,#caffbf,#fdffb6);border-radius:20px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.3);color:#1f2937;text-align:center;}
+#scoreBoard{font-size:24px;color:#d946ef;margin-bottom:10px;font-weight:bold;}
+#image{max-width:90vw;max-height:40vh;margin:20px auto;border:5px solid #ffcc00;border-radius:15px;transition:0.3s;}
+#word{display:flex;flex-direction:column;align-items:center;gap:10px;margin:20px 0;}
+.word-line{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;}
+.letter-box{width:50px;height:50px;border:3px solid #333;display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:bold;border-radius:8px;background:#f0f0f0;transition:0.2s;}
+.alphabet{display:grid;grid-template-columns: repeat(7, minmax(40px, 1fr));gap:8px;margin-top:20px;justify-content:center;max-width:95vw;}
+.letter-btn{display:flex;justify-content:center;align-items:center;padding:10px;font-size:18px;font-weight:bold;border-radius:10px;border:none;cursor:pointer;background:#87cefa;color:#fff;transition:0.3s;}
+.letter-btn:hover:not(:disabled){background:#4682b4;transform:scale(1.1);}
+.letter-btn:disabled{background:#666;color:#ddd;cursor:not-allowed;}
+.letter-btn.win {
+    background: #28a745;
+    color: white;
+    cursor: default !important;
+}
+#message{margin-top:20px;font-size:24px;font-weight:bold;min-height:30px; display:inline;}
+#hangman{margin-top:20px;font-size:26px;font-weight:bold;color:#ff4444; display:inline;}
+#congrats{font-size:40px;font-weight:bold;display:none;margin-top:30px;animation: rainbow 1s infinite alternate;z-index:2;position:relative;line-height:1.2em;text-align:center;}
+#playAgain{display:none;margin-top:20px;padding:12px 30px;font-size:20px;cursor:pointer;border-radius:10px;border:3px solid #ffcc00;background:#fff;color:#333;font-weight:bold;z-index:2;position:relative;transition:0.3s;}
+#playAgain:hover{background:#ffcc00;color:#fff;}
+@keyframes rainbow {0%{color:red;}20%{color:orange;}40%{color:yellow;}60%{color:green;}80%{color:blue;}100%{color:purple;}}
+canvas{position:absolute;top:0;left:0;pointer-events:none;z-index:0;width:100%;height:100%;}
+</style>
+</head>
+<body>
+<div id="brand">🎯Junior English - 113 Lê Trọng Tấn, Đà Nẵng🎯</div>
+<audio id="bg-music" src="sound/background music.mp3" loop></audio>
+<audio id="trueSound" src="sound/true.mp3" preload="auto"></audio>
+<audio id="falseSound" src="sound/false.mp3" preload="auto"></audio>
+
+<div id="welcomeScreen">
+  <h2>🎉 Junior English chào mừng các em 🎉</h2>
+  <input type="text" id="studentName" placeholder="Nhập tên em...">
+  <button id="startBtn">Bắt đầu</button>
+</div>
+
+<div id="gameArea">
+  <div id="scoreBoard">Điểm: 0 / 0</div>
+  <img id="image" src="" alt="Vocabulary Image">
+  <div id="word"></div>
+  <div class="alphabet" id="alphabet"></div>
+  <div id="messages-container" style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap;">
+    <div id="message"></div>
+    <div id="hangman"></div>
+  </div>
+</div>
+
+<div id="congrats">
+  <div id="endLine1">🌸🍦🎉 Junior English chúc mừng em 🎉🍦🌸</div>
+  <div id="endLine2"></div>
+  <div id="endLine3"></div>
+  <button id="playAgain" onclick="startGame()">Chơi lại</button>
+</div>
+<canvas id="balloonCanvas"></canvas>
+
+<script>
+const juniorword = ['building','cap','helmet','map','noisy','quick','quiet','racket','road','shopping centre','slow','tall','thousand','ticket'];
+let junior = [...juniorword];
+const IMAGE_FOLDER = "flashcard/";
+let currentWord="", guessed=[], wrongGuesses=0, score=0, total=juniorword.length, studentName="";
+const maxWrong=3;
+const bgMusic = document.getElementById("bg-music");
+
+// Âm thanh giữ nguyên
+function playTone(freq,duration,type="sine"){
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.type=type; osc.frequency.value=freq;
+  osc.start(); gain.gain.setValueAtTime(0.2,ctx.currentTime);
+  osc.stop(ctx.currentTime+duration/1000);
+}
+function playSound(type){
+  if(type==="correct"){ document.getElementById("trueSound").play(); }
+  else if(type==="wrong"){ document.getElementById("falseSound").play(); }
+  else if(type==="win"){ document.getElementById("trueSound").play(); }
+  else if(type==="lose"){ document.getElementById("falseSound").play(); }
+}
+
+// Balloon giữ nguyên
+const canvas = document.getElementById("balloonCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+let balloons=[];
+function createBalloon(){ balloons.push({x: Math.random()*canvas.width,y: canvas.height + 50,radius: 20 + Math.random()*15,color: `hsl(${Math.random()*360},80%,60%)`,speed:1+Math.random()*2});}
+function animateBalloons(){ctx.clearRect(0,0,canvas.width,canvas.height);balloons.forEach((b,i)=>{b.y-=b.speed;ctx.beginPath();ctx.arc(b.x,b.y,b.radius,0,2*Math.PI);ctx.fillStyle=b.color;ctx.fill();ctx.strokeStyle="#fff";ctx.stroke();if(b.y+b.radius<0) balloons.splice(i,1);});requestAnimationFrame(animateBalloons);}
+function launchBalloons(){const interval=setInterval(()=>{createBalloon();},200);setTimeout(()=>clearInterval(interval),3000);animateBalloons();}
+window.addEventListener("resize",()=>{canvas.width=window.innerWidth; canvas.height=window.innerHeight;});
+
+// Update scoreboard giữ nguyên
+function updateScoreBoard(){
+  document.getElementById("scoreBoard").textContent = `Điểm: ${score} / ${total}`;
+}
+
+// Start game giữ nguyên
+document.getElementById("startBtn").onclick = ()=>{
+  studentName = document.getElementById("studentName").value.trim();
+  if(!studentName){ alert("Vui lòng nhập tên em!"); return; }
+  document.getElementById("welcomeScreen").style.display="none";
+  document.getElementById("gameArea").style.display="block";
+  junior = [...juniorword];
+  score=0; total=juniorword.length;
+  updateScoreBoard();
+  newRound();
+};
+
+// Game logic giữ nguyên
+function newRound(){
+  if(junior.length===0){ showEndScreen(); return; }
+  currentWord = junior[Math.floor(Math.random()*junior.length)];
+  guessed=[]; wrongGuesses=0;
+  document.getElementById("message").textContent="";
+  document.getElementById("hangman").textContent="Wrong: 0/"+maxWrong;
+  // Xóa lớp "win" khi bắt đầu vòng mới
+  document.querySelectorAll(".letter-btn").forEach(btn => {
+      btn.classList.remove("win");
+  });
+  loadImage();
+  renderWord();
+  renderAlphabet();
+  updateScoreBoard();
+}
+
+function loadImage(){
+  const encoded = encodeURIComponent(currentWord.toLowerCase());
+  const img = document.getElementById("image");
+  img.src = IMAGE_FOLDER + encoded + ".png";
+  img.onerror = ()=>{ img.src = IMAGE_FOLDER + encoded + ".jpg"; };
+}
+
+function renderWord(showAll=false){
+  const container=document.getElementById("word"); container.innerHTML="";
+  const parts=currentWord.split(" ");
+  parts.forEach(part=>{
+    const line=document.createElement("div"); line.className="word-line";
+    part.split("").forEach(ch=>{
+      const box=document.createElement("div"); box.className="letter-box";
+      box.textContent = (showAll || guessed.includes(ch.toLowerCase())) ? ch.toUpperCase() : "";
+      line.appendChild(box);
+    });
+    container.appendChild(line);
+  });
+}
+
+function renderAlphabet(){
+  const alphaDiv=document.getElementById("alphabet"); alphaDiv.innerHTML="";
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(letter=>{
+    const btn=document.createElement("button"); btn.className="letter-btn"; btn.textContent=letter;
+    btn.disabled = guessed.includes(letter.toLowerCase());
+    btn.onclick = ()=>guessLetter(letter.toLowerCase(),btn);
+    alphaDiv.appendChild(btn);
+  });
+}
+
+function disableAlphabet(){
+  document.querySelectorAll(".letter-btn").forEach(btn => btn.disabled = true);
+}
+
+function guessLetter(letter,btn){
+  if (wrongGuesses >= maxWrong) return;
+
+  guessed.push(letter);
+  if(currentWord.toLowerCase().includes(letter)){
+    playSound("correct");
+    renderWord();
+    if(checkWin()){
+      document.getElementById("message").textContent="✅ Đúng rồi!";
+      document.getElementById("hangman").textContent="";
+      score++;
+      updateScoreBoard();
+      junior = junior.filter(w=>w!==currentWord);
+      disableAlphabet();
+      // THÊM DÒNG NÀY ĐỂ ĐỔI MÀU NÚT KHI THẮNG
+      document.querySelectorAll(".letter-btn").forEach(btn => {
+        btn.classList.add("win");
+      });
+      setTimeout(newRound,2000);
+    } else {
+        document.getElementById("message").textContent="✅ Đúng rồi!";
+        document.getElementById("hangman").textContent="Wrong: "+wrongGuesses+"/"+maxWrong+" "+"X".repeat(wrongGuesses);
+    }
+  } else {
+    playSound("wrong");
+    wrongGuesses++;
+    document.getElementById("message").textContent="❌ Sai rồi!";
+    document.getElementById("hangman").textContent="Wrong: "+wrongGuesses+"/"+maxWrong+" "+"X".repeat(wrongGuesses);
+    if(wrongGuesses>=maxWrong){
+      document.getElementById("message").textContent="❌ Sai rồi! Word: "+currentWord.toUpperCase();
+      document.getElementById("hangman").textContent="";
+      renderWord(true);
+      junior = junior.filter(w=>w!==currentWord);
+      disableAlphabet();
+      setTimeout(newRound,2500);
+    }
+  }
+  btn.disabled = true;
+}
+
+function checkWin(){ return currentWord.replace(/ /g,"").toLowerCase().split("").every(ch=>guessed.includes(ch)); }
+
+function showEndScreen(){
+  document.getElementById("gameArea").style.display="none";
+  const end1 = document.getElementById("endLine1");
+  const end2 = document.getElementById("endLine2");
+  const end3 = document.getElementById("endLine3");
+  end1.textContent="🌸🍦🎉 Junior English chúc mừng em 🎉🍦🌸";
+  end2.textContent=studentName;
+  end3.textContent=`Điểm của em: ${score} / ${total}`;
+  document.getElementById("congrats").style.display="block";
+  document.getElementById("playAgain").style.display="inline-block";
+  launchBalloons();
+}
+
+// Play Again giữ nguyên
+document.getElementById("playAgain").onclick=()=>{
+  document.getElementById("congrats").style.display="none";
+  document.getElementById("studentName").value="";
+  document.getElementById("welcomeScreen").style.display="flex";
+};
+
+// Nhạc nền tự động giữ nguyên
+document.body.addEventListener("click", () => {
+  bgMusic.volume = 0.5;
+  bgMusic.play().catch(e => console.log("Nhạc bị chặn"));
+}, { once: true });
+
+// Khởi chạy giữ nguyên
+adjustSizes();
+function adjustSizes(){
+  const img = document.getElementById("image");
+  const letterBoxes = document.querySelectorAll(".letter-box");
+  const letterBtns = document.querySelectorAll(".letter-btn");
+  const vw = window.innerWidth; const vh = window.innerHeight;
+  img.style.maxWidth = Math.min(0.9*vw, 500)+"px";
+  img.style.maxHeight = Math.min(0.4*vh, 300)+"px";
+  letterBoxes.forEach(box=>{
+    box.style.width = Math.min(60, vw/10)+"px";
+    box.style.height = Math.min(60, vh/15)+"px";
+    box.style.fontSize = Math.min(32, vw/20)+"px";
+  });
+  letterBtns.forEach(btn=>{
+    btn.style.width = Math.min(60, vw/10)+"px";
+    btn.style.height = Math.min(60, vh/15)+"px";
+    btn.style.fontSize = Math.min(24, vw/25)+"px";
+  });
+}
+window.addEventListener("resize", adjustSizes);
+</script>
+</body>
+</html>
